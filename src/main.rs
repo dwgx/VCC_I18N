@@ -101,10 +101,9 @@ fn fresh_install(
 }
 
 fn apply(detection: &Detection, dist: &Path) -> Result<()> {
-    let mut catalog = detection.proposal.catalog;
-    if catalog == Catalog::ZhTw && catalog::json_for(catalog).trim() == "{}" {
+    let catalog = effective_catalog(detection.proposal.catalog);
+    if catalog != detection.proposal.catalog {
         println!("zh-TW catalog is empty in this version. Using zh-CN.");
-        catalog = Catalog::ZhCn;
     }
     let script = catalog::injector_source(catalog);
     dist::inject(dist, &script)?;
@@ -165,10 +164,47 @@ fn print_table(detection: &Detection) {
             if !vcc.branch.is_empty() {
                 println!("  VCC branch    {}", vcc.branch);
             }
+            if vcc.portable {
+                println!("  VCC portable  yes");
+            }
+            if let Some(bundle) = &vcc.dist_bundle {
+                println!("  Dist bundle   {bundle}");
+            }
             println!("  Dist          {}", vcc.dist_status.as_str());
+            print_missing_keys(vcc, effective_catalog(detection.proposal.catalog));
         }
     }
     println!();
+}
+
+fn effective_catalog(catalog: Catalog) -> Catalog {
+    if catalog == Catalog::ZhTw && catalog::json_for(catalog).trim() == "{}" {
+        Catalog::ZhCn
+    } else {
+        catalog
+    }
+}
+
+fn print_missing_keys(vcc: &vcc_i18n::detect::VccInstall, catalog: Catalog) {
+    let dist = vcc.path.join("WebApp").join("Dist");
+    let Ok(bundle) = dist::index_bundle_path(&dist) else {
+        return;
+    };
+    let Ok(js) = std::fs::read_to_string(&bundle) else {
+        return;
+    };
+    let missing = catalog::missing_from_bundle(&js, catalog::json_for(catalog));
+    if missing.is_empty() {
+        println!("  Catalog        covers Dist UI strings");
+        return;
+    }
+    println!("  Missing keys  {}", missing.len());
+    for key in missing.iter().take(12) {
+        println!("    - {key}");
+    }
+    if missing.len() > 12 {
+        println!("    - ...");
+    }
 }
 
 fn prompt(assume_yes: bool, question: &str, default_yes: bool) -> Result<bool> {
@@ -224,7 +260,7 @@ fn print_help() {
   --yes, -y       accept default prompts
   --uninstall     restore original index.html
   --no-launch     do not start VCC
-  --vcc-dir PATH  override install path
+  --vcc-dir PATH  override install path (registry or portable)
 "
     );
 }

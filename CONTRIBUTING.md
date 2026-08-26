@@ -20,6 +20,12 @@ English UI keys must come from an installed VCC (or a fixture taken from VCC). T
 - Do not add AI attribution to commits or pull requests
 - Pull requests target `main`
 
+## CI
+
+Pushes and pull requests to `main` run format, Clippy, and tests on Windows.
+
+A tag `vMAJOR.MINOR.PATCH` that matches `Cargo.toml` publishes `vcc-i18n.exe` on GitHub Releases. See [MAINTENANCE.md](./MAINTENANCE.md).
+
 ## Versioning
 
 Semantic Versioning. Releases are git tags `vMAJOR.MINOR.PATCH` plus a `CHANGELOG.md` entry.

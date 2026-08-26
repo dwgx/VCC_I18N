@@ -34,3 +34,20 @@ fn skips_urls_and_short_noise() {
         .iter()
         .any(|s| s == "OK" || s == "a" || s == "settings.json"));
 }
+
+#[test]
+fn extracts_jsx_prop_strings_and_skips_class_names() {
+    let js = r#"f(Xt,{children:"Open External Link",className:"fui-Dialog"});f(W,{title:"Open Changelog"});const Qpe="This project is using Git packages, which have been phased out as of today. Please migrate your project to use the new VCC package management.";"#;
+    let got = vcc_i18n::catalog::extract_jsx_ui_strings(js);
+    assert!(got.contains(&"Open External Link".to_string()));
+    assert!(got.contains(&"Open Changelog".to_string()));
+    assert!(got.iter().any(|s| s.contains("Git packages")));
+    assert!(!got.iter().any(|s| s.contains("fui-")));
+}
+
+#[test]
+fn missing_from_bundle_reports_untranslated_jsx_strings() {
+    let js = r#"f(W,{children:"Open External Link"});f(W,{children:"Projects"});"#;
+    let missing = vcc_i18n::catalog::missing_from_bundle(js, r#"{"Projects":"项目"}"#);
+    assert_eq!(missing, vec!["Open External Link".to_string()]);
+}

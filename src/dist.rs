@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 
@@ -25,6 +25,43 @@ impl DistStatus {
             DistStatus::Foreign => "patched by another tool",
         }
     }
+}
+
+pub fn index_bundle_name(dist: &Path) -> Option<String> {
+    let src = index_src_from_dist(dist).ok()?;
+    Some(src.trim_start_matches('/').rsplit('/').next()?.to_string())
+}
+
+pub fn index_bundle_path(dist: &Path) -> Result<PathBuf> {
+    let src = index_src_from_dist(dist)?;
+    let rel = src
+        .trim_start_matches('/')
+        .replace('/', std::path::MAIN_SEPARATOR_STR);
+    Ok(dist.join(rel))
+}
+
+fn index_src_from_dist(dist: &Path) -> Result<String> {
+    let html_path = dist.join(INDEX);
+    let html =
+        fs::read_to_string(&html_path).with_context(|| format!("read {}", html_path.display()))?;
+    if let Ok((_, _, src)) = find_index_script(&html) {
+        return Ok(src);
+    }
+    if let Some(src) = meta_index_src(&html) {
+        return Ok(src);
+    }
+    bail!("could not find /assets/index-*.js")
+}
+
+fn meta_index_src(html: &str) -> Option<String> {
+    let key = "name=\"vcc-i18n-index\"";
+    let i = html.find(key)?;
+    let after = &html[i + key.len()..];
+    let content_key = "content=\"";
+    let j = after.find(content_key)?;
+    let rest = &after[j + content_key.len()..];
+    let k = rest.find('"')?;
+    Some(rest[..k].to_string())
 }
 
 pub fn inspect(dist: &Path) -> Result<DistStatus> {

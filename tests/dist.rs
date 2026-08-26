@@ -73,6 +73,18 @@ fn reinject_uses_orig_not_already_patched_html() {
 }
 
 #[test]
+fn index_bundle_name_reads_meta_after_inject() {
+    let dir = tempfile::tempdir().unwrap();
+    let dist = dir.path();
+    fs::write(dist.join("index.html"), sample_index()).unwrap();
+    inject(dist, "console.log('vcc-i18n')").unwrap();
+    assert_eq!(
+        vcc_i18n::dist::index_bundle_name(dist).as_deref(),
+        Some("index-066158fc.js")
+    );
+}
+
+#[test]
 fn inspect_foreign_marker() {
     let dir = tempfile::tempdir().unwrap();
     let html = sample_index().replace(
