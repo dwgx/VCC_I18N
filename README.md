@@ -14,7 +14,25 @@ Binary: `vcc-i18n.exe`. Injected marker: `vcc-i18n`.
 
 ## Status
 
-Governance is in place. The launcher is not shipping yet.
+v0.1.0 launcher: detect, confirm, install, uninstall. Catalog is Simplified Chinese for VCC 2.4.x UI strings.
+
+## Use
+
+```
+cargo run --release -- --dry-run
+cargo run --release -- --yes --no-launch
+cargo run --release -- --uninstall --yes --no-launch
+```
+
+Or run `target/release/vcc-i18n.exe`.
+
+- `--dry-run` prints the detect table only
+- `--yes` accepts default prompts
+- `--uninstall` restores `index.html`
+- `--no-launch` does not start VCC
+- `--vcc-dir PATH` overrides the registry install path
+
+Re-run the exe after a successful install to be asked about uninstall.
 
 ## Contributing
 
