@@ -14,7 +14,7 @@ Binary: `vcc-i18n.exe`. Injected marker: `vcc-i18n`.
 
 ## Status
 
-v0.2.0 launcher: detect, confirm, install, uninstall.
+v0.3.0 launcher: detect, confirm, install, uninstall, key-coverage report.
 
 Catalog is Simplified Chinese for VCC 2.4.x and 2.5.x UI strings, including portable `2.5.0-beta.2`.
 
@@ -29,6 +29,9 @@ No extra runtime. After a VCC update, download the latest release and run it aga
 ```
 vcc-i18n.exe
 vcc-i18n.exe --dry-run
+vcc-i18n.exe --report-keys
+vcc-i18n.exe --report-keys --out coverage.json
+vcc-i18n.exe --version
 vcc-i18n.exe --yes --no-launch
 vcc-i18n.exe --uninstall --yes --no-launch
 ```
@@ -40,6 +43,9 @@ cargo run --release -- --dry-run
 ```
 
 - `--dry-run` prints the detect table only
+- `--report-keys` prints catalog coverage for the current Dist bundle (missing and unused keys) and never writes into Dist
+- `--out PATH` with `--report-keys` writes the coverage report as JSON
+- `--version` prints `vcc-i18n <version>`
 - `--yes` accepts default prompts
 - `--uninstall` restores `index.html`
 - `--no-launch` does not start VCC

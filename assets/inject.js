@@ -17,7 +17,18 @@ function translate(node) {
     return;
   }
   if (typeof node !== "object") return;
-  const keys = ["children", "content", "title", "placeholder", "label", "text"];
+  const keys = [
+    "children",
+    "content",
+    "title",
+    "placeholder",
+    "label",
+    "text",
+    "header",
+    "description",
+    "alt",
+    "aria-label",
+  ];
   for (const key of keys) {
     if (!(key in node)) continue;
     const current = node[key];
@@ -27,13 +38,15 @@ function translate(node) {
   if (node.props) translate(node.props);
 }
 
-function proxy(fn) {
+function proxy(fn, translateChildren) {
   return new Proxy(fn, {
     apply(target, thisArg, args) {
       if (args.length > 1) translate(args[1]);
-      for (let i = 2; i < args.length; i += 1) {
-        if (typeof args[i] === "string") args[i] = t(args[i]);
-        else translate(args[i]);
+      if (translateChildren) {
+        for (let i = 2; i < args.length; i += 1) {
+          if (typeof args[i] === "string") args[i] = t(args[i]);
+          else translate(args[i]);
+        }
       }
       return target.apply(thisArg, args);
     },
@@ -45,12 +58,12 @@ function patchCode(code) {
     .replace(
       /([A-Za-z_$][\w$]*)\.(jsx|jsxs)=([A-Za-z_$][\w$]*)/g,
       (_, obj, prop, fn) =>
-        `${obj}.${prop}=${fn};${obj}.${prop}=globalThis.__vcc_i18n_proxy__(${obj}.${prop})`
+        `${obj}.${prop}=${fn};${obj}.${prop}=globalThis.__vcc_i18n_proxy__(${obj}.${prop},false)`
     )
     .replace(
       /([A-Za-z_$][\w$]*)\.createElement=([A-Za-z_$][\w$]*)/g,
       (_, obj, fn) =>
-        `${obj}.createElement=${fn};${obj}.createElement=globalThis.__vcc_i18n_proxy__(${obj}.createElement)`
+        `${obj}.createElement=${fn};${obj}.createElement=globalThis.__vcc_i18n_proxy__(${obj}.createElement,true)`
     );
 }
 

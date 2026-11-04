@@ -14,6 +14,8 @@ struct Args {
     dry_run: bool,
     uninstall: bool,
     no_launch: bool,
+    report_keys: bool,
+    out: Option<PathBuf>,
     vcc_dir: Option<PathBuf>,
 }
 
@@ -32,6 +34,11 @@ fn run() -> Result<()> {
 
     let detection = detect::detect(args.vcc_dir.as_deref())?;
     print_table(&detection);
+
+    if args.report_keys {
+        report_keys(&args, &detection)?;
+        return Ok(());
+    }
 
     if args.dry_run {
         return Ok(());
@@ -207,6 +214,58 @@ fn print_missing_keys(vcc: &vcc_i18n::detect::VccInstall, catalog: Catalog) {
     }
 }
 
+fn report_keys(args: &Args, detection: &Detection) -> Result<()> {
+    let Some(vcc) = detection.vcc.as_ref() else {
+        bail!("VCC was not found. Pass --vcc-dir PATH");
+    };
+    let dist = vcc.path.join("WebApp").join("Dist");
+    let bundle = dist::index_bundle_path(&dist)?;
+    let bundle_name = bundle
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| bundle.display().to_string());
+    let js =
+        std::fs::read_to_string(&bundle).with_context(|| format!("read {}", bundle.display()))?;
+    let catalog = effective_catalog(detection.proposal.catalog);
+    let coverage = catalog::coverage(&js, catalog::json_for(catalog));
+    let missing_count = coverage.missing.len();
+    let unused_count = coverage.unused.len();
+
+    println!("Key coverage");
+    println!("  {:<14}{bundle_name}", "bundle");
+    println!("  {:<14}{}", "catalog", catalog.id());
+    println!("  {:<14}{missing_count}", "missing_count");
+    println!("  {:<14}{unused_count}", "unused_count");
+    for (label, keys) in [("missing", &coverage.missing), ("unused", &coverage.unused)] {
+        if keys.is_empty() {
+            continue;
+        }
+        println!("  {label}:");
+        for key in keys.iter().take(12) {
+            println!("    - {key}");
+        }
+        if keys.len() > 12 {
+            println!("    - ...");
+        }
+    }
+
+    if let Some(path) = &args.out {
+        let report = serde_json::json!({
+            "bundle": bundle_name,
+            "catalog": catalog.id(),
+            "missing_count": missing_count,
+            "unused_count": unused_count,
+            "missing": coverage.missing,
+            "unused": coverage.unused,
+        });
+        let body = serde_json::to_string_pretty(&report)?;
+        std::fs::write(path, format!("{body}\n"))
+            .with_context(|| format!("write {}", path.display()))?;
+        println!("\nWrote {}", path.display());
+    }
+    Ok(())
+}
+
 fn prompt(assume_yes: bool, question: &str, default_yes: bool) -> Result<bool> {
     if assume_yes {
         return Ok(default_yes);
@@ -229,6 +288,8 @@ fn parse_args() -> Result<Args> {
         dry_run: false,
         uninstall: false,
         no_launch: false,
+        report_keys: false,
+        out: None,
         vcc_dir: None,
     };
     let mut raw = env::args().skip(1);
@@ -238,9 +299,18 @@ fn parse_args() -> Result<Args> {
             "--dry-run" => args.dry_run = true,
             "--uninstall" => args.uninstall = true,
             "--no-launch" => args.no_launch = true,
+            "--report-keys" => args.report_keys = true,
+            "--out" => {
+                let path = raw.next().context("--out needs a path")?;
+                args.out = Some(PathBuf::from(path));
+            }
             "--vcc-dir" => {
                 let path = raw.next().context("--vcc-dir needs a path")?;
                 args.vcc_dir = Some(PathBuf::from(path));
+            }
+            "--version" => {
+                println!("vcc-i18n {}", env!("CARGO_PKG_VERSION"));
+                std::process::exit(0);
             }
             "--help" | "-h" => {
                 print_help();
@@ -257,6 +327,9 @@ fn print_help() {
         "vcc-i18n -- standalone VCC localizer
 
   --dry-run       detect only
+  --report-keys   print catalog coverage for the Dist bundle (read-only)
+  --out PATH      with --report-keys, write the coverage JSON to PATH
+  --version       print the version
   --yes, -y       accept default prompts
   --uninstall     restore original index.html
   --no-launch     do not start VCC

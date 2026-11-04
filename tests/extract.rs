@@ -51,3 +51,31 @@ fn missing_from_bundle_reports_untranslated_jsx_strings() {
     let missing = vcc_i18n::catalog::missing_from_bundle(js, r#"{"Projects":"项目"}"#);
     assert_eq!(missing, vec!["Open External Link".to_string()]);
 }
+
+#[test]
+fn coverage_reports_missing_and_unused_keys() {
+    let js = r#"f(W,{children:"Open External Link"});f(W,{children:"Projects"});"#;
+    let coverage = vcc_i18n::catalog::coverage(js, r#"{"Projects":"项目","Stale Key":"旧"}"#);
+    assert_eq!(coverage.missing, vec!["Open External Link".to_string()]);
+    assert_eq!(coverage.unused, vec!["Stale Key".to_string()]);
+}
+
+#[test]
+fn extractor_reads_alt_and_aria_label_props() {
+    let js = r#"f("img",{alt:"VCC Logo"});f("button",{"aria-label":"Resize column"});"#;
+    let got = vcc_i18n::catalog::extract_jsx_ui_strings(js);
+    assert!(got.contains(&"VCC Logo".to_string()));
+    assert!(got.contains(&"Resize column".to_string()));
+}
+
+#[test]
+fn jsx_proxy_does_not_translate_key_argument() {
+    let src = injector_source(Catalog::ZhCn);
+    assert!(src.contains("function proxy(fn, translateChildren)"));
+    assert!(src.contains("globalThis.__vcc_i18n_proxy__(${obj}.${prop},false)"));
+    assert!(src.contains("globalThis.__vcc_i18n_proxy__(${obj}.createElement,true)"));
+    let compact: String = src.chars().filter(|c| !c.is_whitespace()).collect();
+    assert!(compact.contains(
+        r#""children","content","title","placeholder","label","text","header","description","alt","aria-label""#
+    ));
+}

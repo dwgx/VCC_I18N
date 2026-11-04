@@ -7,6 +7,7 @@ const INDEX: &str = "index.html";
 const ORIG: &str = "index.html.vcc-i18n-orig";
 const OURS: &str = "data-vcc-i18n";
 const FOREIGN: &str = "vcc-auto-translate";
+const TITLE_STYLE: &str = r#"<style data-vcc-i18n="1">.fui-Title1,.fui-Title2,.fui-Title3,.fui-Subtitle1,.fui-Subtitle2{white-space:nowrap}</style>"#;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DistStatus {
@@ -86,24 +87,24 @@ pub fn inject(dist: &Path, script_body: &str) -> Result<()> {
         bail!("index.html is missing in {}", dist.display());
     }
 
-    let source = if orig.exists() {
-        fs::read_to_string(&orig).with_context(|| format!("read {}", orig.display()))?
-    } else {
-        let current =
-            fs::read_to_string(&index).with_context(|| format!("read {}", index.display()))?;
-        match inspect(dist)? {
-            DistStatus::Foreign => {
-                bail!("Dist is patched by another tool; restore that first")
+    let source = match inspect(dist)? {
+        DistStatus::Ours => {
+            if !orig.exists() {
+                bail!("patched index.html without {ORIG}");
             }
-            DistStatus::Ours => bail!("patched index.html without {} ", ORIG),
-            DistStatus::Missing => bail!("index.html is missing"),
-            DistStatus::Clean => current,
+            fs::read_to_string(&orig).with_context(|| format!("read {}", orig.display()))?
         }
+        DistStatus::Clean => {
+            let current =
+                fs::read_to_string(&index).with_context(|| format!("read {}", index.display()))?;
+            // A VCC update replaces index.html but leaves our backup behind. Record the
+            // current bytes so the stale backup cannot resurrect the previous bundle.
+            fs::write(&orig, &current).with_context(|| format!("write {}", orig.display()))?;
+            current
+        }
+        DistStatus::Foreign => bail!("Dist is patched by another tool; restore that first"),
+        DistStatus::Missing => bail!("index.html is missing"),
     };
-
-    if !orig.exists() {
-        fs::write(&orig, &source).with_context(|| format!("write {}", orig.display()))?;
-    }
 
     let patched = patch_html(&source, script_body)?;
     fs::write(&index, patched).with_context(|| format!("write {}", index.display()))?;
@@ -136,6 +137,14 @@ fn patch_html(html: &str, script_body: &str) -> Result<String> {
         out.insert_str(idx, &injected);
     } else {
         out.push_str(&injected);
+    }
+
+    // CJK has a break opportunity between every glyph, so a flex item such as
+    // .fui-Title1 shrinks to min-content (one glyph per line). Keep titles on one line.
+    if let Some(idx) = out.to_ascii_lowercase().rfind("</head>") {
+        out.insert_str(idx, TITLE_STYLE);
+    } else {
+        out.insert_str(0, TITLE_STYLE);
     }
     Ok(out)
 }

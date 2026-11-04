@@ -30,7 +30,7 @@ Never leave a foreign tool's script tag in Dist.
 
 1. Run `vcc-i18n.exe --dry-run` (or `cargo run -- --dry-run`) against the new Dist.
 2. If Dist is `clean` because VCC replaced `index.html`, confirm install again.
-3. If the table lists missing keys, add translations to `catalogs/zh-CN.json` from those English strings (taken from this VCC, not from another project).
+3. Run `vcc-i18n.exe --report-keys --out coverage.json` (or `cargo run -- --report-keys --out coverage.json`) and add translations for the reported `missing` keys to `catalogs/zh-CN.json` from those English strings (taken from this VCC, not from another project). Review `unused` keys before deleting any.
 4. Keep old keys. Bump `Cargo.toml` + `CHANGELOG.md`, then cut a release.
 
 ## Console

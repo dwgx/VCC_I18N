@@ -34,6 +34,8 @@ const JSX_KEYS: &[&str] = &[
     "text",
     "header",
     "description",
+    "alt",
+    "aria-label",
 ];
 
 pub fn extract_jsx_ui_strings(js: &str) -> Vec<String> {
@@ -53,26 +55,54 @@ pub fn extract_jsx_ui_strings(js: &str) -> Vec<String> {
     out
 }
 
-pub fn missing_from_bundle(js: &str, catalog_json: &str) -> Vec<String> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Coverage {
+    pub missing: Vec<String>,
+    pub unused: Vec<String>,
+}
+
+pub fn coverage(js: &str, catalog_json: &str) -> Coverage {
     let Ok(value) = serde_json::from_str::<serde_json::Value>(catalog_json) else {
-        return Vec::new();
+        return Coverage {
+            missing: Vec::new(),
+            unused: Vec::new(),
+        };
     };
     let Some(map) = value.as_object() else {
-        return Vec::new();
+        return Coverage {
+            missing: Vec::new(),
+            unused: Vec::new(),
+        };
     };
-    extract_jsx_ui_strings(js)
-        .into_iter()
-        .filter(|key| !map.contains_key(key))
-        .collect()
+    let found = extract_jsx_ui_strings(js);
+    let found_set: std::collections::BTreeSet<&str> = found.iter().map(String::as_str).collect();
+    let mut missing: Vec<String> = found
+        .iter()
+        .filter(|key| !map.contains_key(*key))
+        .cloned()
+        .collect();
+    let mut unused: Vec<String> = map
+        .keys()
+        .filter(|key| !found_set.contains(key.as_str()))
+        .cloned()
+        .collect();
+    missing.sort();
+    unused.sort();
+    Coverage { missing, unused }
+}
+
+pub fn missing_from_bundle(js: &str, catalog_json: &str) -> Vec<String> {
+    coverage(js, catalog_json).missing
 }
 
 fn is_jsx_ui_context(js: &str, quote_start: usize, raw: &str) -> bool {
     let from = quote_start.saturating_sub(32);
     let prefix = &js[from..quote_start];
-    if JSX_KEYS
-        .iter()
-        .any(|key| prefix.ends_with(&format!("{key}:")) || prefix.ends_with(&format!("{key}:[")))
-    {
+    if JSX_KEYS.iter().any(|key| {
+        prefix.ends_with(&format!("{key}:"))
+            || prefix.ends_with(&format!("{key}:["))
+            || prefix.ends_with(&format!("\"{key}\":"))
+    }) {
         return true;
     }
     if prefix.ends_with(',') && (raw.starts_with(' ') || raw.starts_with('•')) {

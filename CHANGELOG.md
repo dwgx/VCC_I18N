@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-11-04
+
+- Replace a stale `index.html.vcc-i18n-orig` when VCC has replaced `index.html`, so re-injecting after an update keeps the new bundle instead of reverting to the previous one.
+- Stop translating the `jsx`/`jsxs` key argument: `proxy(fn, translateChildren)` only walks extra arguments for `createElement`.
+- Translate `header`, `description`, `alt`, and `aria-label` props; extraction and injection now cover the same key list.
+- Inject a `white-space: nowrap` style for `.fui-Title*` / `.fui-Subtitle*` so CJK page titles stop wrapping one glyph per line.
+- Add `--report-keys [--out PATH]`: read-only catalog coverage (missing and unused keys) as console output and JSON.
+- Add `--version`.
+
 ## 0.2.0 - 2026-08-26
 
 - Detect portable VCC installs (`CreatorCompanionBeta.exe` plus Dist) when the registry path is missing.
