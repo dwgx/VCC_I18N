@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 - 2026-11-04
+
+- Force `white-space: nowrap !important` on the Fluent title/subtitle classes so Griffel's later atomic sheet cannot override it and CJK titles stay on one line.
+- Write `SHA256SUMS.txt` with LF endings, so `sha256sum -c` works outside PowerShell.
+- Rewrite dayjs' English relative-time table to the zh-cn table at injection time; no-op when the literal is absent.
+- Add `Resize column` and `VCC Logo` to the zh-CN catalog.
+
 ## 0.3.0 - 2026-11-04
 
 - Replace a stale `index.html.vcc-i18n-orig` when VCC has replaced `index.html`, so re-injecting after an update keeps the new bundle instead of reverting to the previous one.

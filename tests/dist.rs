@@ -136,8 +136,9 @@ fn inject_adds_nowrap_style_for_cjk_titles() {
     inject(dist, "console.log('vcc-i18n')").unwrap();
 
     let html = fs::read_to_string(dist.join("index.html")).unwrap();
-    let style = "<style data-vcc-i18n=\"1\">.fui-Title1,.fui-Title2,.fui-Title3,.fui-Subtitle1,.fui-Subtitle2{white-space:nowrap}</style>";
+    let style = "<style data-vcc-i18n=\"1\">.fui-Title1,.fui-Title2,.fui-Title3,.fui-Subtitle1,.fui-Subtitle2{white-space:nowrap!important}</style>";
     assert!(html.contains(style));
+    assert!(html.contains("white-space:nowrap!important"));
     assert!(html.find(style).unwrap() < html.find("</head>").unwrap());
 
     restore(dist).unwrap();

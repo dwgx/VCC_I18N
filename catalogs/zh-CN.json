@@ -533,5 +533,7 @@
   "Note, this will completely remove your settings.json file and replace it with a new one. You will need to re-add all the projects, local packages and custom repos again": "注意：这会彻底删除 settings.json 并换成新文件。你需要重新添加全部项目、本地包和自定义仓库",
   " are supported by VRChat": " 受 VRChat 支持",
   " build of the Creator Companion, it is intended for testing purposes and can be unstable.": " 版创作者助手，仅用于测试，可能不稳定。",
-  "Link to the repository JSON file. E.g. https://vrchat.github.io/myRepo/index.json": "仓库 JSON 文件链接。例如 https://vrchat.github.io/myRepo/index.json"
+  "Link to the repository JSON file. E.g. https://vrchat.github.io/myRepo/index.json": "仓库 JSON 文件链接。例如 https://vrchat.github.io/myRepo/index.json",
+  "Resize column": "调整列宽",
+  "VCC Logo": "VCC 标志"
 }

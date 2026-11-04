@@ -7,7 +7,7 @@ const INDEX: &str = "index.html";
 const ORIG: &str = "index.html.vcc-i18n-orig";
 const OURS: &str = "data-vcc-i18n";
 const FOREIGN: &str = "vcc-auto-translate";
-const TITLE_STYLE: &str = r#"<style data-vcc-i18n="1">.fui-Title1,.fui-Title2,.fui-Title3,.fui-Subtitle1,.fui-Subtitle2{white-space:nowrap}</style>"#;
+const TITLE_STYLE: &str = r#"<style data-vcc-i18n="1">.fui-Title1,.fui-Title2,.fui-Title3,.fui-Subtitle1,.fui-Subtitle2{white-space:nowrap!important}</style>"#;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DistStatus {

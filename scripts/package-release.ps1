@@ -16,6 +16,7 @@ if (-not (Test-Path -LiteralPath $exe)) {
 }
 Copy-Item -LiteralPath $exe -Destination (Join-Path $dist 'vcc-i18n.exe') -Force
 $hash = (Get-FileHash -LiteralPath (Join-Path $dist 'vcc-i18n.exe') -Algorithm SHA256).Hash.ToLowerInvariant()
-Set-Content -LiteralPath (Join-Path $dist 'SHA256SUMS.txt') -Value "$hash  vcc-i18n.exe" -Encoding ascii
+$sums = Join-Path $dist 'SHA256SUMS.txt'
+[System.IO.File]::WriteAllText($sums, "$hash  vcc-i18n.exe`n", [System.Text.Encoding]::ASCII)
 Write-Output "wrote dist\vcc-i18n.exe"
 Write-Output "sha256 $hash"

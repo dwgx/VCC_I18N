@@ -69,6 +69,19 @@ fn extractor_reads_alt_and_aria_label_props() {
 }
 
 #[test]
+fn patch_code_rewrites_dayjs_relative_time() {
+    let src = injector_source(Catalog::ZhCn);
+    assert!(src.contains(
+        r#"{future:"in %s",past:"%s ago",s:"a few seconds",m:"a minute",mm:"%d minutes",h:"an hour",hh:"%d hours",d:"a day",dd:"%d days",M:"a month",MM:"%d months",y:"a year",yy:"%d years"}"#
+    ));
+    assert!(src.contains(
+        r#"{future:"%s后",past:"%s前",s:"几秒",m:"1 分钟",mm:"%d 分钟",h:"1 小时",hh:"%d 小时",d:"1 天",dd:"%d 天",M:"1 个月",MM:"%d 个月",y:"1 年",yy:"%d 年"}"#
+    ));
+    assert!(src.contains(".split(DAYJS_EN_RELATIVE_TIME)"));
+    assert!(src.contains(".join(DAYJS_ZH_RELATIVE_TIME)"));
+}
+
+#[test]
 fn jsx_proxy_does_not_translate_key_argument() {
     let src = injector_source(Catalog::ZhCn);
     assert!(src.contains("function proxy(fn, translateChildren)"));

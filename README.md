@@ -14,7 +14,7 @@ Binary: `vcc-i18n.exe`. Injected marker: `vcc-i18n`.
 
 ## Status
 
-v0.3.0 launcher: detect, confirm, install, uninstall, key-coverage report.
+v0.3.1 launcher: detect, confirm, install, uninstall, key-coverage report.
 
 Catalog is Simplified Chinese for VCC 2.4.x and 2.5.x UI strings, including portable `2.5.0-beta.2`.
 
